@@ -20,16 +20,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Download and make installer executable
+      - name: Install Rust server 
         run: |
-          # Download installer that sets up Rust server, Oxide and plugin
-          curl -sL https://raw.githubusercontent.com/publicrust/rust-server-setup/main/install_rust_server.sh \
-            -o install_rust_server.sh
-          chmod +x install_rust_server.sh
+          # Crear script custom
+          cat << 'EOF' > install_rust_server.sh
+          #!/bin/bash
+          set -e
 
-      - name: Install Rust server into workspace
-        run: |
-          # Installer will use /home/runner/rust_server internally
+          sudo apt-get update
+          sudo apt-get install -y lib32gcc-s1 steamcmd
+
+          # Instalar Rust
+          steamcmd +login anonymous +force_install_dir /home/runner/rust_server +app_update 258550 -beta release-237 validate +quit
+
+          # Crear start.sh básico
+          cat <<EOT > /home/runner/rust_server/start.sh
+          #!/bin/bash
+          /home/runner/rust_server/RustDedicated -batchmode -nographics -silent-crashes -logfile output.log +server.secure 0
+          EOT
+          chmod +x /home/runner/rust_server/start.sh
+          EOF
+
+          chmod +x install_rust_server.sh
           ./install_rust_server.sh
 
       # --- NEW: Generate Template ---
